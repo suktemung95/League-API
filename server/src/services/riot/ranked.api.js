@@ -1,12 +1,10 @@
 const riotGet = require('./riotClient')
+const accountApi = require('./account.api')
 
 exports.getRankedDataByRiotId = async (gameName, tagLine, region, platform) => {
 
     // 1. Riot ID → PUUID
-    const account = await riotGet(
-        `/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`,
-        region
-    )
+    const account = await accountApi.getAccountByRiotId(gameName, tagLine, region)
 
     // 2. PUUID → ranked
     const ranked = await riotGet(

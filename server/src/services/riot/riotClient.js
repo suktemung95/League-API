@@ -13,7 +13,10 @@ const riotClient = axios.create({
 
 async function riotGet(path, region) {
     const url = `https://${region}.api.riotgames.com${path}`
+    console.log('Logging URL', url)
     const response = await riotClient.get(url)
+    console.log('Success')
+
     return response.data
 }
 

@@ -4,10 +4,12 @@ const app = express()
 
 const playerRoutes = require('./routes/player.routes')
 const accountRoutes = require('./routes/account.routes')
+const matchRoutes = require('./routes/match.routes')
 
 app.use(express.json())
 app.use('/players', playerRoutes)
 app.use('/accounts', accountRoutes)
+app.use('/matches', matchRoutes)
 
 app.get('/ping', (req, res) => {
     res.json({ message: 'pong', status: "ok" })
