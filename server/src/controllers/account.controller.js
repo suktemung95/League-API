@@ -1,11 +1,11 @@
 const accountService = require("../services/account.service");
 
-exports.getAccountByRiotId = async (req, res) => {
+exports.getAccountByUser = async (req, res) => {
   try {
     const { gameName, tagLine } = req.params;
     const { region } = req.query;
 
-    const data = await accountService.getAccountByRiotId(
+    const data = await accountService.getAccountByUser(
       gameName,
       tagLine,
       region,

@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 
-const { getAccountByRiotId } = require('../controllers/account.controller')
+const { getAccountByUser } = require('../controllers/account.controller')
 
-router.get('/:gameName/:tagLine', getAccountByRiotId)
+router.get('/:gameName/:tagLine', getAccountByUser)
 
 module.exports = router
