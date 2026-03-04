@@ -8,3 +8,7 @@ GET http://localhost:3000/players/S7rqNDzk_oRKNPslMxI9P4mmz8UevjTxGsLKTeu32rdJdt
 ###
 
 GET http://localhost:3000/ping
+
+###
+
+GET http://localhost:3000/redis-test
