@@ -23,3 +23,18 @@ exports.addPlayer = async (playerData, region) => {
 
     return result.rows[0];
 }
+
+exports.refreshPlayer = async (playerData, region) => {
+    const { puuid, profileIconId, summonerLevel, revisionDate } = playerData
+
+    const result = await pool.query(
+        `
+        UPDATE players
+        SET profile_icon_id = $2, summoner_level = $3, revision_date = $4, updated_at = NOW()
+        WHERE puuid = $1 AND region = $5
+        RETURNING *
+    `, [puuid, profileIconId, summonerLevel, revisionDate, region]
+    )
+
+    return result.rows[0];
+}

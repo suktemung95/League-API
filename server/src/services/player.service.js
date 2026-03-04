@@ -1,7 +1,8 @@
 const playerRepo = require("../repositories/player.repository");
 const playerApi = require("./riot/player.api");
 
-const redis = require('../cache/redis')
+const redis = require('../cache/redis');
+const { cache } = require("react");
 
 async function getPlayerById(id, region) {
 
@@ -31,4 +32,14 @@ async function getPlayerById(id, region) {
     return player;
 }
 
-module.exports = { getPlayerById };
+async function refreshPlayerById(id, region) {
+
+    const cacheKey = `player:${region}:${id}`;
+
+    const player = await playerApi.getPlayerById(id, region)
+    const updatedPlayer = await playerRepo.refreshPlayer(player, region)
+    await redis.set(cacheKey, JSON.stringify(updatedPlayer), { EX: 3600 });
+    return updatedPlayer
+}
+
+module.exports = { getPlayerById, refreshPlayerById };
