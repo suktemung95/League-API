@@ -1,19 +1,34 @@
 const playerRepo = require("../repositories/player.repository");
 const playerApi = require("./riot/player.api");
-const accountService = require("./account.service");
+
+const redis = require('../cache/redis')
 
 async function getPlayerById(id, region) {
-    let player = await playerRepo.getPlayerById(id, region);
 
-    if (player) {
-        return player;
+    // 1. Check redis
+    const cacheKey = `player:${region}:${id}`;
+    const cachedPlayer = await redis.get(cacheKey);
+
+    if (cachedPlayer) {
+        return JSON.parse(cachedPlayer);
     }
 
-    const account = await accountService.getAccountById(id, region);
-    const playerData = await playerApi.getPlayerById(account.puuid, region);
-    await playerRepo.addPlayer(playerData, region);
+    // 2. Check database
+    let player = await playerRepo.getPlayerById(id, region);
 
-    return playerData;
+    // 3. If not found, fetch from Riot API
+    const playerData = player;
+    if (!player) {
+        player = await playerApi.getPlayerById(id, region);
+
+        // 4. Save to database
+        await playerRepo.addPlayer(player, region);
+    }
+
+    // 5. Save to Redis cache
+    await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 });
+
+    return player;
 }
 
 module.exports = { getPlayerById };
