@@ -1,9 +1,9 @@
 const pool = require("../db/postgres");
 
-exports.getPlayerById = async (id) => {
+exports.getPlayerById = async (id, region) => {
     const result = await pool.query(
-        "SELECT * FROM players WHERE puuid=$1",
-        [id]
+        "SELECT * FROM players WHERE puuid=$1 AND region=$2",
+        [id, region]
     )
 
     return result.rows[0];
@@ -37,4 +37,16 @@ exports.refreshPlayer = async (playerData, region) => {
     )
 
     return result.rows[0];
+}
+
+exports.getPlayersNeedingRefresh = async () => {
+    const query = `
+        SELECT puuid, region
+        FROM players
+        WHERE updated_at IS NULL OR updated_at < NOW() - INTERVAL '1 hour'
+    `;
+
+    const result = await pool.query(query);
+
+    return result.rows;
 }

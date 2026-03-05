@@ -38,3 +38,4 @@
 - add rate limiter
 - add player stats table
 - logging?
+- graphQL

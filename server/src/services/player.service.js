@@ -1,35 +1,48 @@
 const playerRepo = require("../repositories/player.repository");
 const playerApi = require("./riot/player.api");
 
+const riotQueue = require('../queues/riot.queue');
+
 const redis = require('../cache/redis');
-const { cache } = require("react");
+
+const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
 
 async function getPlayerById(id, region) {
 
-    // 1. Check redis
-    const cacheKey = `player:${region}:${id}`;
-    const cachedPlayer = await redis.get(cacheKey);
+    const cacheKey = `player:${region}:${id}`
 
-    if (cachedPlayer) {
-        return JSON.parse(cachedPlayer);
-    }
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
 
-    // 2. Check database
-    let player = await playerRepo.getPlayerById(id, region);
+    const player = await playerRepo.getPlayerById(id, region)
 
-    // 3. If not found, fetch from Riot API
-    const playerData = player;
     if (!player) {
-        player = await playerApi.getPlayerById(id, region);
 
-        // 4. Save to database
-        await playerRepo.addPlayer(player, region);
+        await riotQueue.add(
+            'add-player',
+            { id, region },
+            { jobId: `player:add:${id}:${region}` }
+        )
+
+        return null
     }
 
-    // 5. Save to Redis cache
-    await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 });
+    const lastUpdated = new Date(player.updated_at).getTime()
+    const isStale = Date.now() - lastUpdated > ONE_HOUR
 
-    return player;
+    if (isStale) {
+
+        await riotQueue.add(
+            'refresh-player',
+            { id, region },
+            { jobId: `player:refresh:${id}:${region}` }
+        )
+
+    }
+
+    await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 })
+
+    return player
 }
 
 async function refreshPlayerById(id, region) {
@@ -42,4 +55,13 @@ async function refreshPlayerById(id, region) {
     return updatedPlayer
 }
 
-module.exports = { getPlayerById, refreshPlayerById };
+async function schedulePlayerRefresh(id, region) {
+    await riotQueue.add(
+        'refresh-player',
+        { id, region },
+        {
+            jobId: `player:refresh:${id}:${region}`,
+            attempts: 3
+        });
+}
+module.exports = { getPlayerById, refreshPlayerById, schedulePlayerRefresh };
