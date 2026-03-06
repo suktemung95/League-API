@@ -1,16 +1,26 @@
+require('dotenv').config()
+
 const { Worker } = require('bullmq')
 const playerService = require('../services/player.service')
 const playerRepo = require('../repositories/player.repository')
-const playerApi = require('./riot/player.api')
+const playerApi = require('../services/riot/player.api')
+const redis = require('../cache/redis')
 
 const connection = {
     host: process.env.REDIS_HOST,
     port: 6379
 }
 
+console.log("Worker Redis host:", process.env.REDIS_HOST)
+console.log("Worker booting...")
+
 const worker = new Worker(
     "riotQueue",
     async job => {
+
+        console.log('Processing job:', job.name)
+        console.log('Data:', job.data)
+
         if (job.name === 'refresh-player') {
             return playerService.refreshPlayerById(
                 job.data.id,
@@ -38,6 +48,18 @@ const worker = new Worker(
         }
     }
 )
+
+worker.on("ready", () => {
+    console.log("Worker ready")
+})
+
+worker.on("error", err => {
+    console.error("Worker error:", err)
+})
+
+worker.on("active", (job) => {
+    console.log("Job started:", job.name, job.id)
+})
 
 worker.on("completed", (job) => {
     console.log(`Player refresh completed for job ${job.id}`)

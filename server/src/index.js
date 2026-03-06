@@ -4,6 +4,8 @@ const app = express();
 
 const pool = require("./db/postgres");
 const redis = require("./cache/redis");
+const scheduler = require('./schedulers/player.refresh.scheduler')
+const worker = require('./workers/player.worker')
 
 const playerRoutes = require("./routes/player.routes");
 const accountRoutes = require("./routes/account.routes");

@@ -18,12 +18,19 @@ async function getPlayerById(id, region) {
 
     if (!player) {
 
-        await riotQueue.add(
+        const job = await riotQueue.add(
             'add-player',
             { id, region },
-            { jobId: `player:add:${id}:${region}` }
+            {
+                jobId: `player_add_${id}_${region}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3
+            }
+
         )
 
+        console.log('Add Player Job added:', job.id)
         return null
     }
 
@@ -32,12 +39,17 @@ async function getPlayerById(id, region) {
 
     if (isStale) {
 
-        await riotQueue.add(
+        const job = await riotQueue.add(
             'refresh-player',
             { id, region },
-            { jobId: `player:refresh:${id}:${region}` }
+            {
+                jobId: `player_refresh_${id}_${region}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3
+            }
         )
-
+        console.log('Player data is stale. Refresh job added:', job.id)
     }
 
     await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 })
@@ -56,12 +68,16 @@ async function refreshPlayerById(id, region) {
 }
 
 async function schedulePlayerRefresh(id, region) {
-    await riotQueue.add(
+    const job = await riotQueue.add(
         'refresh-player',
         { id, region },
         {
-            jobId: `player:refresh:${id}:${region}`,
+            jobId: `player_refresh_${id}_${region}`,
+            removeOnComplete: true,
+            removeOnFail: true,
             attempts: 3
         });
+
+    console.log('Player Refresh Job added:', job.id)
 }
 module.exports = { getPlayerById, refreshPlayerById, schedulePlayerRefresh };
