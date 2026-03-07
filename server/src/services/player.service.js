@@ -1,7 +1,6 @@
 const playerRepo = require("../repositories/player.repository");
 const playerApi = require("./riot/player.api");
-
-const riotQueue = require('../queues/riot.queue');
+const playerJobs = require('../jobs/player.jobs')
 
 const redis = require('../cache/redis');
 
@@ -20,19 +19,7 @@ async function getPlayerById(id, region) {
 
     if (!player) {
 
-        const job = await riotQueue.add(
-            'add-player',
-            { id, region },
-            {
-                jobId: `player_add_${id}_${region}`,
-                removeOnComplete: true,
-                removeOnFail: true,
-                attempts: 3
-            }
-
-        )
-
-        console.log('Add Player Job added:', job.id)
+        playerJobs.schedulePlayerAdd(id, region)
         return null
     }
 
@@ -41,17 +28,7 @@ async function getPlayerById(id, region) {
 
     if (isStale) {
 
-        const job = await riotQueue.add(
-            'refresh-player',
-            { id, region },
-            {
-                jobId: `player_refresh_${id}_${region}`,
-                removeOnComplete: true,
-                removeOnFail: true,
-                attempts: 3
-            }
-        )
-        console.log('Player data is stale. Refresh job added:', job.id)
+        playerJobs.schedulePlayerRefresh(id, region)
     }
 
     await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 })
