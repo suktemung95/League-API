@@ -1,0 +1,1 @@
+exports.getPlayerCacheKey = (id, region) => `player:${region}:${id}`;
