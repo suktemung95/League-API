@@ -5,11 +5,13 @@ const riotQueue = require('../queues/riot.queue');
 
 const redis = require('../cache/redis');
 
+const { getPlayerCacheKey } = require('../utils/cacheKey.gen')
+
 const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
 
 async function getPlayerById(id, region) {
 
-    const cacheKey = `player:${region}:${id}`
+    const cacheKey = getPlayerCacheKey(id, region)
 
     const cached = await redis.get(cacheKey)
     if (cached) return JSON.parse(cached)
@@ -59,7 +61,7 @@ async function getPlayerById(id, region) {
 
 async function refreshPlayerById(id, region) {
 
-    const cacheKey = `player:${region}:${id}`;
+    const cacheKey = getPlayerCacheKey(id, region)
 
     const player = await playerApi.getPlayerById(id, region)
     const updatedPlayer = await playerRepo.refreshPlayer(player, region)
@@ -67,17 +69,4 @@ async function refreshPlayerById(id, region) {
     return updatedPlayer
 }
 
-async function schedulePlayerRefresh(id, region) {
-    const job = await riotQueue.add(
-        'refresh-player',
-        { id, region },
-        {
-            jobId: `player_refresh_${id}_${region}`,
-            removeOnComplete: true,
-            removeOnFail: true,
-            attempts: 3
-        });
-
-    console.log('Player Refresh Job added:', job.id)
-}
-module.exports = { getPlayerById, refreshPlayerById, schedulePlayerRefresh };
+module.exports = { getPlayerById, refreshPlayerById };

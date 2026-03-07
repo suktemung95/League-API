@@ -1,1 +1,1 @@
-exports.getPlayerCacheKey = (id, region) => `player:${region}:${id}`;
+exports.getPlayerCacheKey = (id, region) => `player:${id}:${region}`;
