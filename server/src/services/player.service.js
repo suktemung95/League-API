@@ -2,11 +2,12 @@ const playerRepo = require("../repositories/player.repository");
 const playerApi = require("./riot/player.api");
 const playerJobs = require('../jobs/player.jobs')
 
+const refresher = require('../utils/refresher')
+
 const redis = require('../cache/redis');
 
 const { getPlayerCacheKey } = require('../utils/cacheKey.gen')
 
-const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
 
 async function getPlayerById(id, region) {
 
@@ -23,13 +24,7 @@ async function getPlayerById(id, region) {
         return null
     }
 
-    const lastUpdated = new Date(player.updated_at).getTime()
-    const isStale = Date.now() - lastUpdated > ONE_HOUR
-
-    if (isStale) {
-
-        playerJobs.schedulePlayerRefresh(id, region)
-    }
+    refresher.refreshIfStale(player, () => playerJobs.schedulePlayerRefresh(id, region))
 
     await redis.set(cacheKey, JSON.stringify(player), { EX: 3600 })
 
