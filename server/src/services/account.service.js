@@ -2,10 +2,9 @@ const accountRepo = require("../repositories/account.repository");
 const accountApi = require("./riot/account.api");
 const mapper = require("../utils/mapper");
 
-const redis = require('../cache/redis')
+const redis = require("../cache/redis");
 
 async function getAccountByUser(name, tag, region) {
-
   // 1. Check redis
   const cacheKey = `account:${region}:${name}:${tag}`;
   const cachedAccount = await redis.get(cacheKey);
@@ -33,12 +32,12 @@ async function getAccountByUser(name, tag, region) {
   // 5. Save to Redis cache
   await redis.set(cacheKey, JSON.stringify(account), { EX: 3600 });
 
+  console.log("Returning account: ", account);
   return account;
 }
 
 async function getAccountById(id, platform) {
-
-  const region = mapper.toRegion(platform)
+  const region = mapper.toRegion(platform);
 
   // 1. Check redis
   const cacheKey = `account:${region}:${id}`;
