@@ -4,8 +4,9 @@ exports.getMatchesByAccountId = async (req, res) => {
   try {
     const { id } = req.params;
     const { region } = req.query;
-    const data = await matchService.getMatchesByAccountId(id, region);
-    res.json(data);
+    const result = await matchService.getMatchesByAccountId(id, region);
+    const matches = result.rows;
+    res.json(matches.map((m) => m.match_id));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -24,7 +24,7 @@ exports.getRecentMatches = async (id, region) => {
   const query = `
   SELECT match_id FROM matches WHERE puuid=$1 AND region=$2
   ORDER BY CAST(SPLIT_PART(match_id, '_', 2) AS BIGINT) DESC
-  LIMIT 10`;
+  LIMIT 20`;
 
   return await pool.query(query, [id, region]);
 };
